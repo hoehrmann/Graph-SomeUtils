@@ -6,7 +6,7 @@ use warnings;
 use base qw(Exporter);
 use Graph;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
 	graph_delete_vertices_fast
@@ -14,12 +14,24 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
   graph_all_successors_and_self
   graph_all_predecessors_and_self
   graph_vertices_between
+  graph_get_vertex_label
+  graph_set_vertex_label
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw(
 );
+
+sub graph_get_vertex_label {
+  my ($g, $v) = @_;
+  return $g->get_vertex_attribute($v, 'label');
+}
+
+sub graph_set_vertex_label {
+  my ($g, $v, $label) = @_;
+  $g->set_vertex_attribute($v, 'label', $label);
+}
 
 sub graph_delete_vertex_fast {
   my $g = shift;
@@ -113,6 +125,14 @@ order.
 
 Returns the union of C<$g->all_predecessors($v)> and C<$v> in an arbitrary
 order.
+
+=item graph_get_vertex_label($g, $v)
+
+Shorthand for getting the vertex attribute C<label>.
+
+=item graph_set_vertex_label($g, $v, $label)
+
+Shorthand for setting the vertex attribute C<label>.
 
 =back
 

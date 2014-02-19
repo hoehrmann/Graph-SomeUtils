@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use warnings;
-use Data::AutoBimap;
+use Graph::SomeUtils;
 
 # TODO: implement something useful
 

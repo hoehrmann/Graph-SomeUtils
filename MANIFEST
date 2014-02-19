@@ -4,6 +4,7 @@ MANIFEST
 README
 t/01basic.t
 t/02simple.t
+t/03label.t
 t/98podsyn.t
 t/99podcov.t
 eg/simple.pl
