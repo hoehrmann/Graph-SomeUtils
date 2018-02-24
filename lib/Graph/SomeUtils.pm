@@ -6,7 +6,7 @@ use warnings;
 use base qw(Exporter);
 use Graph;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
 	graph_delete_vertices_fast
@@ -14,6 +14,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
   graph_all_successors_and_self
   graph_all_predecessors_and_self
   graph_vertices_between
+  graph_edges_between
   graph_get_vertex_label
   graph_set_vertex_label
   graph_isolate_vertex
@@ -38,6 +39,12 @@ sub graph_set_vertex_label {
 
 sub graph_delete_vertex_fast {
   my $g = shift;
+
+  if (UNIVERSAL::isa($g, 'Graph::Feather')) {
+    $g->delete_vertex($_[0]);
+    return $g;
+  }
+
   $g->expect_non_unionfind;
   my $V = $g->[ Graph::_V ];
   return $g unless $V->has_path( @_ );
@@ -62,6 +69,20 @@ sub graph_vertices_between {
   return grep {
     $from_src{$_}
   } graph_all_predecessors_and_self($g, $dst);
+}
+
+sub graph_edges_between {
+  my ($g, $src, $dst) = @_;
+
+  my @subgraph = graph_vertices_between($g, $src, $dst);
+
+  my %in_subgraph = map { $_ => 1 } @subgraph;
+
+  my @subgraph_edges = grep {
+    $in_subgraph{$_->[0]} and $in_subgraph{$_->[1]}
+  } $g->edges;
+
+  return @subgraph_edges;
 }
 
 sub graph_all_successors_and_self {
@@ -138,6 +159,10 @@ Same as C<graph_delete_vertex_fast> for multiple vertices.
 Returns the intersection of vertices that are reachable from C<$source>
 and vertices from which C<$destination> is reachable, including the
 C<$source> and C<$destination> vertices themself.
+
+=item graph_edges_between($g, $source, $destination)
+
+Returns the edges between vertices returned by C<graph_vertices_between>.
 
 =item graph_all_successors_and_self($g, $v)
 
