@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use base qw(Exporter);
 use Graph;
+use Graph::Directed;
 
 our $VERSION = '0.21';
 
@@ -62,6 +63,22 @@ sub graph_delete_vertices_fast {
 
 sub graph_vertices_between {
   my ($g, $src, $dst) = @_;
+
+  my %seen;
+  
+  for my $edge (graph_edges_between($g, $src, $dst)) {
+    $seen{ $edge->[0] }++;
+    $seen{ $edge->[1] }++;
+  }
+
+  warn unless $seen{$src};
+  warn unless $seen{$dst};
+
+  return keys %seen;
+}
+
+sub graph_vertices_between_old {
+  my ($g, $src, $dst) = @_;
   my %from_src;
   
   $from_src{$_}++ for graph_all_successors_and_self($g, $src);
@@ -74,7 +91,33 @@ sub graph_vertices_between {
 sub graph_edges_between {
   my ($g, $src, $dst) = @_;
 
+  my $subgraph = Graph::Directed->new(
+    edges => [ grep {
+      $_->[1] ne $src and $_->[0] ne $dst
+    } $g->edges ],
+  );
+
+  my @vertices = graph_vertices_between_old($subgraph, $src, $dst);
+
+  warn unless grep { $src eq $_ } @vertices;
+  warn unless grep { $dst eq $_ } @vertices;
+
+  my %in_subgraph = map { $_ => 1 } @vertices;
+
+  my @subgraph_edges = grep {
+    $in_subgraph{$_->[0]} and $in_subgraph{$_->[1]}
+  } $g->edges;
+
+  return @subgraph_edges;
+}
+
+sub graph_edges_between_old {
+  my ($g, $src, $dst) = @_;
+
   my @subgraph = graph_vertices_between($g, $src, $dst);
+
+  die unless grep { $src eq $_ } @subgraph;
+  die unless grep { $dst eq $_ } @subgraph;
 
   my %in_subgraph = map { $_ => 1 } @subgraph;
 
