@@ -71,6 +71,8 @@ sub graph_vertices_between {
     $seen{ $edge->[1] }++;
   }
 
+  return unless keys %seen;
+  
   warn unless $seen{$src};
   warn unless $seen{$dst};
 
@@ -91,13 +93,15 @@ sub graph_vertices_between_old {
 sub graph_edges_between {
   my ($g, $src, $dst) = @_;
 
-  my $subgraph = Graph::Directed->new(
+  my $subgraph = (ref $g)->new(
     edges => [ grep {
       $_->[1] ne $src and $_->[0] ne $dst
     } $g->edges ],
   );
 
   my @vertices = graph_vertices_between_old($subgraph, $src, $dst);
+
+  return unless @vertices;
 
   warn unless grep { $src eq $_ } @vertices;
   warn unless grep { $dst eq $_ } @vertices;
