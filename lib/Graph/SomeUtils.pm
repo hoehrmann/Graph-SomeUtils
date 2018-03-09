@@ -72,64 +72,35 @@ sub graph_vertices_between {
   }
 
   return unless keys %seen;
-  
+
   warn unless $seen{$src};
   warn unless $seen{$dst};
 
   return keys %seen;
 }
 
-sub graph_vertices_between_old {
-  my ($g, $src, $dst) = @_;
-  my %from_src;
-  
-  $from_src{$_}++ for graph_all_successors_and_self($g, $src);
-  
-  return grep {
-    $from_src{$_}
-  } graph_all_predecessors_and_self($g, $dst);
-}
-
 sub graph_edges_between {
   my ($g, $src, $dst) = @_;
 
-  my $subgraph = (ref $g)->new(
-    edges => [ grep {
-      $_->[1] ne $src and $_->[0] ne $dst
-    } $g->edges ],
-  );
+  my %fwd;
+  for (my @todo = $src; @todo; ) {
+    my $current = shift @todo;
+    next if $fwd{$current}++;
+    next if $current eq $dst;
+    push @todo, $g->successors($current);
+  }
 
-  my @vertices = graph_vertices_between_old($subgraph, $src, $dst);
-
-  return unless @vertices;
-
-  warn unless grep { $src eq $_ } @vertices;
-  warn unless grep { $dst eq $_ } @vertices;
-
-  my %in_subgraph = map { $_ => 1 } @vertices;
-
-  my @subgraph_edges = grep {
-    $in_subgraph{$_->[0]} and $in_subgraph{$_->[1]}
+  my %bwd;
+  for (my @todo = $dst; @todo; ) {
+    my $current = shift @todo;
+    next if $bwd{$current}++;
+    next if $current eq $src;
+    push @todo, $g->predecessors($current);
+  }
+  
+  return grep {
+    grep { $fwd{$_} and $bwd{$_} } @$_
   } $g->edges;
-
-  return @subgraph_edges;
-}
-
-sub graph_edges_between_old {
-  my ($g, $src, $dst) = @_;
-
-  my @subgraph = graph_vertices_between($g, $src, $dst);
-
-  die unless grep { $src eq $_ } @subgraph;
-  die unless grep { $dst eq $_ } @subgraph;
-
-  my %in_subgraph = map { $_ => 1 } @subgraph;
-
-  my @subgraph_edges = grep {
-    $in_subgraph{$_->[0]} and $in_subgraph{$_->[1]}
-  } $g->edges;
-
-  return @subgraph_edges;
 }
 
 sub graph_all_successors_and_self {
